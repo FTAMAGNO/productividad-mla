@@ -118,6 +118,16 @@ tbody td{padding:7px 10px;font-size:12px}
 .tg-item .l{font-size:10px;color:#64748b;margin-top:3px}
 .rec-box{background:#0f172a;border-left:3px solid #3b82f6;border-radius:0 6px 6px 0;padding:10px 14px;font-size:12px;color:#94a3b8;line-height:1.6;margin-top:8px}
 .cnt{color:#64748b;font-size:11px}
+/* PERFORMANCE BADGE */
+.perf-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid}
+/* FEEDBACK POINTS */
+.fb-section{background:#0f172a;border-radius:8px;padding:14px;margin-bottom:14px}
+.fb-title{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.fb-point{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #1e293b;align-items:flex-start;font-size:12px;line-height:1.6;color:#94a3b8}
+.fb-point:last-child{border-bottom:none}
+.fb-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+/* SEMANAS TABLE */
+.sem-row-up{color:#22c55e} .sem-row-dn{color:#ef4444} .sem-row-eq{color:#f59e0b}
 </style>
 </head>
 <body>
@@ -137,7 +147,7 @@ tbody td{padding:7px 10px;font-size:12px}
   <button class="tab-btn" onclick="goTab('operarios',this)">Por Operario</button>
   <button class="tab-btn" onclick="goTab('manana',this)">Turno Mañana</button>
   <button class="tab-btn" onclick="goTab('tarde',this)">Turno Tarde</button>
-  <button class="tab-btn" onclick="goTab('targets',this)">Análisis de Targets</button>
+  <button class="tab-btn" onclick="goTab('guia',this)">Guía</button>
 </div>
 
 <!-- ══ RESUMEN DEL DÍA ══════════════════════════════════════════════════════ -->
@@ -241,12 +251,210 @@ tbody td{padding:7px 10px;font-size:12px}
   </tr></thead><tbody id="tb-mt"></tbody></table></div></div>
 </div>
 
-<!-- ══ TARGETS ══════════════════════════════════════════════════════════════ -->
-<div id="page-targets" class="page">
-  <div id="target-cards"></div>
-  <div class="section">
-    <div class="sh">Comparativa UPH — Todos los operarios por ruta</div>
-    <canvas id="cTargets" height="260"></canvas>
+<!-- ══ GUÍA ═══════════════════════════════════════════════════════════════ -->
+<div id="page-guia" class="page">
+  <div style="max-width:860px;margin:0 auto">
+
+    <!-- INTRO -->
+    <div class="section" style="border-left:3px solid #3b82f6">
+      <div class="sh">¿Para qué sirve este reporte?</div>
+      <p style="color:#94a3b8;line-height:1.8;font-size:13px">
+        Este reporte mide la <b style="color:#e2e8f0">productividad real</b> de cada operario del WMS INVAS.
+        Está diseñado para que los <b style="color:#e2e8f0">Team Leaders</b> puedan preparar feedbacks basados en datos concretos,
+        identificar oportunidades de mejora y reconocer el buen desempeño con evidencia objetiva.
+        Los datos se actualizan cada vez que se carga un nuevo archivo de INVAS.
+      </p>
+    </div>
+
+    <!-- SOLAPAS -->
+    <div class="section">
+      <div class="sh">Cómo navegar el reporte</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="background:#0f172a;border-radius:8px;padding:14px;border-left:3px solid #3b82f6">
+          <div style="font-weight:700;color:#60a5fa;margin-bottom:6px">📊 Resumen del Día</div>
+          <div style="color:#94a3b8;font-size:12px;line-height:1.7">Vista general por ruta. Muestra las tarjetas de UPH por ruta y la tabla de detalle. Podés filtrar por día, semana o mes y por turno.</div>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:14px;border-left:3px solid #8b5cf6">
+          <div style="font-weight:700;color:#a78bfa;margin-bottom:6px">👤 Por Operario</div>
+          <div style="color:#94a3b8;font-size:12px;line-height:1.7">Perfil detallado de cada operario. Seleccioná uno de la lista izquierda para ver su rendimiento, tendencia, puntos de feedback y evolución por período.</div>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:14px;border-left:3px solid #60a5fa">
+          <div style="font-weight:700;color:#60a5fa;margin-bottom:6px">🌅 Turno Mañana / 🌆 Turno Tarde</div>
+          <div style="color:#94a3b8;font-size:12px;line-height:1.7">Ranking de operarios por turno. Ordenable por cualquier columna. Filtrá por fecha y ruta para ver el rendimiento en un día específico.</div>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:14px;border-left:3px solid #22c55e">
+          <div style="font-weight:700;color:#4ade80;margin-bottom:6px">📖 Guía (esta página)</div>
+          <div style="color:#94a3b8;font-size:12px;line-height:1.7">Instrucciones, metodología de medición, cómo preparar un feedback y glosario de términos.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CÓMO PREPARAR UN FEEDBACK -->
+    <div class="section" style="border-left:3px solid #8b5cf6">
+      <div class="sh">Cómo preparar un feedback con este reporte</div>
+      <div style="counter-reset:steps">
+        <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
+          <div style="background:#8b5cf6;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0">1</div>
+          <div><div style="font-weight:700;color:#e2e8f0;margin-bottom:3px">Ir a la solapa "Por Operario"</div><div style="color:#94a3b8;font-size:12px;line-height:1.6">Buscá al operario en la lista de la izquierda. Filtrá por turno o ruta si necesitás acotar la vista.</div></div>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
+          <div style="background:#8b5cf6;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0">2</div>
+          <div><div style="font-weight:700;color:#e2e8f0;margin-bottom:3px">Leer la categoría de performance y el UPH</div><div style="color:#94a3b8;font-size:12px;line-height:1.6">El badge de color te indica el estado general: <span style="color:#22c55e">verde = en o sobre target</span>, <span style="color:#f59e0b">amarillo = cerca o en progreso</span>, <span style="color:#ef4444">rojo = necesita atención</span>.</div></div>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
+          <div style="background:#8b5cf6;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0">3</div>
+          <div><div style="font-weight:700;color:#e2e8f0;margin-bottom:3px">Revisar los "Puntos para el feedback"</div><div style="color:#94a3b8;font-size:12px;line-height:1.6">Son bullets generados automáticamente con los datos del operario. Te dan los argumentos concretos para la conversación: tendencia, consistencia, días sobre/bajo target.</div></div>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
+          <div style="background:#8b5cf6;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0">4</div>
+          <div><div style="font-weight:700;color:#e2e8f0;margin-bottom:3px">Usar las tarjetas por período para ir al detalle</div><div style="color:#94a3b8;font-size:12px;line-height:1.6">Filtrá por semana o día para mostrarle al operario cómo evolucionó. Compará su mejor semana contra la peor.</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:#8b5cf6;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0">5</div>
+          <div><div style="font-weight:700;color:#e2e8f0;margin-bottom:3px">Usar las preguntas guía del glosario</div><div style="color:#94a3b8;font-size:12px;line-height:1.6">Más abajo en esta página encontrás preguntas concretas para guiar la conversación según el tipo de situación.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- METODOLOGÍA -->
+    <div class="section">
+      <div class="sh">Cómo se mide la productividad</div>
+      <div style="color:#94a3b8;font-size:12px;line-height:1.8;margin-bottom:12px">
+        Solo se cuentan tareas con estado <b style="color:#e2e8f0">TERMINADA</b> y duración de <b style="color:#e2e8f0">2 minutos o menos</b>.
+        Tareas más largas se excluyen porque generalmente representan interrupciones o problemas puntuales.
+      </div>
+      <div style="background:#0f172a;border-radius:8px;padding:14px;margin-bottom:10px">
+        <div style="font-weight:700;color:#60a5fa;margin-bottom:8px">Algoritmo de ventana activa</div>
+        <div style="color:#94a3b8;font-size:12px;line-height:1.9">
+          1. Se ordenan las tareas del operario por hora de inicio.<br>
+          2. Se agrupan en <b style="color:#e2e8f0">segmentos continuos</b>: si entre una tarea y la siguiente hay menos de 15 minutos, pertenecen al mismo segmento.<br>
+          3. Si el bache entre tareas es <b style="color:#e2e8f0">15 minutos o más</b>, se cierra el segmento y se abre uno nuevo (ese tiempo intermedio no cuenta).<br>
+          4. Se suma la duración de todos los segmentos → ese es el <b style="color:#e2e8f0">tiempo efectivo de trabajo</b>.<br>
+          5. El break del turno queda excluido automáticamente porque el operario deja de bipear durante esos minutos.
+        </div>
+      </div>
+      <div style="background:#0f172a;border-radius:8px;padding:14px">
+        <div style="font-weight:700;color:#60a5fa;margin-bottom:8px">Ejemplo práctico</div>
+        <div style="color:#94a3b8;font-size:12px;line-height:1.9">
+          Un operario bipeó de <b style="color:#e2e8f0">07:00 a 08:30</b>, luego de <b style="color:#e2e8f0">10:30 a 14:00</b>.<br>
+          → Bache de 08:30 a 10:30 = 2 horas → <span style="color:#ef4444">se excluye</span> (≥ 15 min)<br>
+          → Tiempo efectivo = 1h30 + 3h30 = <b style="color:#22c55e">5 horas</b><br>
+          → Si procesó 2.200 unidades → UPH = 2.200 ÷ 5h = <b style="color:#22c55e">440 uds/h</b>
+        </div>
+      </div>
+    </div>
+
+    <!-- TARGETS -->
+    <div class="section">
+      <div class="sh">Targets por ruta</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">
+        <div style="background:#0f172a;border-radius:8px;padding:12px;border-top:2px solid #3b82f6;text-align:center">
+          <div style="color:#60a5fa;font-weight:700;font-size:13px">CARDS</div>
+          <div style="font-size:22px;font-weight:800;color:#e2e8f0;margin:4px 0">428.6</div>
+          <div style="color:#64748b;font-size:11px">uds/h · 3000 uds/jornada</div>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:12px;border-top:2px solid #8b5cf6;text-align:center">
+          <div style="color:#a78bfa;font-weight:700;font-size:13px">XD POINT</div>
+          <div style="font-size:22px;font-weight:800;color:#e2e8f0;margin:4px 0">150</div>
+          <div style="color:#64748b;font-size:11px">uds/h</div>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:12px;border-top:2px solid #f59e0b;text-align:center">
+          <div style="color:#fbbf24;font-weight:700;font-size:13px">CORREO ARGENTINO</div>
+          <div style="font-size:22px;font-weight:800;color:#e2e8f0;margin:4px 0">180</div>
+          <div style="color:#64748b;font-size:11px">uds/h · 1 tarea = 1 unidad</div>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:12px;border-top:2px solid #475569;text-align:center">
+          <div style="color:#94a3b8;font-weight:700;font-size:13px">FULL / OFF / PICKIT</div>
+          <div style="font-size:22px;font-weight:800;color:#475569;margin:4px 0">—</div>
+          <div style="color:#64748b;font-size:11px">Sin target definido aún</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GLOSARIO -->
+    <div class="section">
+      <div class="sh">Glosario de términos</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="background:#0f172a;border-radius:8px;padding:12px">
+          <span style="color:#60a5fa;font-weight:700">UPH (Unidades Por Hora)</span>
+          <span style="color:#94a3b8;font-size:12px;margin-left:8px">Cantidad de unidades procesadas por hora de trabajo efectivo. Es la métrica principal de productividad.</span>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:12px">
+          <span style="color:#60a5fa;font-weight:700">UPH Ventana activa</span>
+          <span style="color:#94a3b8;font-size:12px;margin-left:8px">UPH calculado dividiendo las unidades por el tiempo real de bipeo (suma de segmentos activos, excluyendo baches ≥ 15 min).</span>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:12px">
+          <span style="color:#60a5fa;font-weight:700">UPH 7h fijas</span>
+          <span style="color:#94a3b8;font-size:12px;margin-left:8px">UPH calculado dividiendo las unidades siempre por 7 horas. Útil para comparar operarios en igualdad de condiciones.</span>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:12px">
+          <span style="color:#60a5fa;font-weight:700">Segmento activo</span>
+          <span style="color:#94a3b8;font-size:12px;margin-left:8px">Bloque continuo de tareas donde el tiempo entre una y la siguiente es menor a 15 minutos. El reporte suma todos los segmentos del día.</span>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:12px">
+          <span style="color:#60a5fa;font-weight:700">Bache</span>
+          <span style="color:#94a3b8;font-size:12px;margin-left:8px">Tiempo sin tareas entre dos bipeos consecutivos. Si dura 15 minutos o más, no se cuenta como tiempo productivo (el operario pudo haber cambiado de sector, esperado mercadería, etc.).</span>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:12px">
+          <span style="color:#60a5fa;font-weight:700">CV% (Coeficiente de Variación)</span>
+          <span style="color:#94a3b8;font-size:12px;margin-left:8px">Mide la consistencia del operario entre sus distintos días. <span style="color:#22c55e">≤15% = alta consistencia</span> (rinde parejo). <span style="color:#f59e0b">16–30% = moderada</span>. <span style="color:#ef4444">>30% = alta variabilidad</span> (grandes diferencias entre días).</span>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:12px">
+          <span style="color:#60a5fa;font-weight:700">Tendencia</span>
+          <span style="color:#94a3b8;font-size:12px;margin-left:8px">Compara el UPH promedio de la primera mitad del período vs la segunda mitad. <span style="color:#22c55e">↑ Mejorando</span>: segunda mitad mejor. <span style="color:#ef4444">↓ Decayendo</span>: segunda mitad peor. <span style="color:#f59e0b">→ Estable</span>: sin cambio significativo.</span>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:12px">
+          <span style="color:#60a5fa;font-weight:700">Ranking</span>
+          <span style="color:#94a3b8;font-size:12px;margin-left:8px">Posición del operario dentro de su turno, ordenado por UPH de mayor a menor. Ejemplo: #3 de 13 significa que es el 3er mejor de su turno.</span>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:12px">
+          <span style="color:#60a5fa;font-weight:700">Uds/día promedio</span>
+          <span style="color:#94a3b8;font-size:12px;margin-left:8px">Total de unidades procesadas dividido la cantidad de días trabajados en el período.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREGUNTAS GUÍA -->
+    <div class="section" style="border-left:3px solid #22c55e">
+      <div class="sh">Preguntas guía para el feedback</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="background:#0f172a;border-radius:8px;padding:14px">
+          <div style="color:#22c55e;font-weight:700;margin-bottom:8px;font-size:12px">🟢 Para operarios sobre target</div>
+          <ul style="color:#94a3b8;font-size:12px;line-height:2;padding-left:16px">
+            <li>¿Qué técnica o rutina te ayuda a mantener este ritmo?</li>
+            <li>¿Hay algo del proceso que podrías compartir con el equipo?</li>
+            <li>¿Qué necesitás para sostener este nivel consistentemente?</li>
+            <li>Tu mejor día fue [fecha] con [X] uds/h — ¿qué pasó ese día?</li>
+          </ul>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:14px">
+          <div style="color:#ef4444;font-weight:700;margin-bottom:8px;font-size:12px">🔴 Para operarios bajo target</div>
+          <ul style="color:#94a3b8;font-size:12px;line-height:2;padding-left:16px">
+            <li>¿Hay algo que te dificulte mantener el ritmo durante la jornada?</li>
+            <li>¿Cuándo sentís que trabajás mejor — a qué hora del turno?</li>
+            <li>¿Tenés claridad sobre el objetivo de [X] uds/h?</li>
+            <li>En tu mejor día llegaste a [X] uds/h — ¿qué fue diferente?</li>
+          </ul>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:14px">
+          <div style="color:#f59e0b;font-weight:700;margin-bottom:8px;font-size:12px">⚠️ Para operarios con alta variabilidad</div>
+          <ul style="color:#94a3b8;font-size:12px;line-height:2;padding-left:16px">
+            <li>Hay días donde llegás a [X] uds/h y otros a [Y] — ¿a qué lo atribuís?</li>
+            <li>¿Hay días de la semana donde el trabajo fluye mejor?</li>
+            <li>¿Qué factores externos afectan tu ritmo (carga de trabajo, posición)?</li>
+          </ul>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:14px">
+          <div style="color:#3b82f6;font-weight:700;margin-bottom:8px;font-size:12px">📈 Para operarios con tendencia negativa</div>
+          <ul style="color:#94a3b8;font-size:12px;line-height:2;padding-left:16px">
+            <li>Tus primeras semanas fueron más fuertes — ¿notaste algún cambio?</li>
+            <li>¿Hay algo del proceso o del equipo que cambió últimamente?</li>
+            <li>¿Cómo te sentís con la carga actual de trabajo?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -277,7 +485,6 @@ function goTab(n,btn){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+n).classList.add('active');
   btn.classList.add('active');
-  if(n==='targets') drawTargets();
 }
 function stab(btn,id){
   document.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));
@@ -504,12 +711,24 @@ function renderOpProfile(u){
   const initials=u.usuario.slice(0,2).toUpperCase();
   const avatarCol=u.turno==='Mañana'?'#1d4ed8':'#92400e';
 
+  const cat=perfCategory(u.uph,tgt,u.tendencia);
+  const talkPts=generateTalkingPoints(u,tgt);
+
   let html=`
   <div class="profile-header">
     <div class="profile-avatar" style="background:${avatarCol}">${initials}</div>
-    <div>
+    <div style="flex:1">
       <div class="profile-name">${u.usuario}</div>
-      <div class="profile-sub"><span class="${u.turno==='Mañana'?'bm':'bt'}">${u.turno}</span> &nbsp;·&nbsp; ${u.dias} días trabajados &nbsp;·&nbsp; Ranking: <b style="color:#e2e8f0">#${rank} de ${total}</b></div>
+      <div class="profile-sub" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span class="${u.turno==='Mañana'?'bm':'bt'}">${u.turno}</span>
+        <span style="color:#475569">·</span>
+        <span>${u.dias} días trabajados</span>
+        <span style="color:#475569">·</span>
+        <span>Ranking <b style="color:#e2e8f0">#${rank} de ${total}</b></span>
+      </div>
+      <div style="margin-top:7px">
+        <span class="perf-badge" style="color:${cat.color};background:${cat.bg};border-color:${cat.border}">${cat.label}</span>
+      </div>
     </div>
     <div class="profile-uph-big">
       <div class="v" style="color:${col}">${u.uph}</div>
@@ -530,6 +749,12 @@ function renderOpProfile(u){
     <div class="pkpi"><div class="v">${u.cv}%</div><div class="l">Variabilidad (CV)</div></div>
     <div class="pkpi"><div class="v">${u.tareas.toLocaleString('es-AR')}</div><div class="l">Tareas totales</div></div>
     ${tgt?`<div class="pkpi" style="grid-column:span 2"><div class="gauge-bar"><div class="gauge-fill" style="width:${Math.min(100,pct)}%;background:${col}"></div></div><div class="gauge-labels"><span>0</span><span style="color:${col};font-weight:700">${pct}% del target (${tgt} uds/h)</span><span>150%</span></div></div>`:'<div class="pkpi" style="grid-column:span 2"><div style="color:#475569;font-size:12px">Sin target definido para la ruta</div></div>'}
+  </div>`;
+
+  // PUNTOS DE FEEDBACK
+  html+=`<div class="fb-section">
+    <div class="fb-title">📋 Puntos para el feedback</div>
+    ${talkPts.map(p=>`<div class="fb-point"><span class="fb-icon">${p.icon}</span><span>${p.text}</span></div>`).join('')}
   </div>`;
 
   // PERIOD FILTER + ROUTE CARDS
@@ -645,6 +870,50 @@ function renderOpProfile(u){
   },50);
 }
 
+function perfCategory(uph,tgt,tendencia){
+  if(!tgt) return {label:'Sin target',color:'#3b82f6',bg:'#1d4ed820',border:'#1d4ed860'};
+  if(uph>=tgt&&tendencia!=='down') return {label:'Top performer',color:'#22c55e',bg:'#14532d20',border:'#16a34a60'};
+  if(uph>=tgt)                     return {label:'En target',color:'#22c55e',bg:'#14532d20',border:'#16a34a60'};
+  if(uph>=tgt*.85&&tendencia==='up') return {label:'En progreso ↑',color:'#3b82f6',bg:'#1d4ed820',border:'#1d4ed860'};
+  if(uph>=tgt*.85)                   return {label:'Cerca del target',color:'#f59e0b',bg:'#78350f20',border:'#92400e60'};
+  if(tendencia==='up')               return {label:'Mejorando ↑',color:'#f59e0b',bg:'#78350f20',border:'#92400e60'};
+  return {label:'Necesita atención',color:'#ef4444',bg:'#7f1d1d20',border:'#b91c1c60'};
+}
+
+function generateTalkingPoints(u,tgt){
+  const pts=[];
+  // Performance vs target
+  if(tgt){
+    const pct=Math.round(u.uph/tgt*100);
+    const gap=(u.uph-tgt).toFixed(1);
+    if(u.uph>=tgt) pts.push({icon:'✅',text:`Supera el target: <b style="color:#22c55e">${u.uph} uds/h</b> vs objetivo de ${tgt} uds/h (${pct}%)`});
+    else if(u.uph>=tgt*.85) pts.push({icon:'⚠️',text:`Cerca del target: <b style="color:#f59e0b">${u.uph} uds/h</b>, le faltan <b>${Math.abs(gap)} uds/h</b> para alcanzar el objetivo de ${tgt} uds/h (${pct}%)`});
+    else pts.push({icon:'🔴',text:`Por debajo del target: <b style="color:#ef4444">${u.uph} uds/h</b> vs objetivo de ${tgt} uds/h (${pct}%) — diferencia de <b>${Math.abs(gap)} uds/h</b>`});
+  }
+  // Tendencia
+  if(u.tendencia==='up') pts.push({icon:'📈',text:`Tendencia positiva: pasó de <b style="color:#94a3b8">${u.trend_p1}</b> a <b style="color:#22c55e">${u.trend_p2} uds/h</b> en la segunda mitad del período`});
+  else if(u.tendencia==='down') pts.push({icon:'📉',text:`Tendencia negativa: bajó de <b style="color:#94a3b8">${u.trend_p1}</b> a <b style="color:#ef4444">${u.trend_p2} uds/h</b> — revisar qué cambió en este período`});
+  else pts.push({icon:'➡️',text:`Rendimiento estable: promedia <b>${u.uph} uds/h</b> sin variaciones significativas entre la primera y segunda mitad del período`});
+  // Consistencia
+  if(u.cv<=15) pts.push({icon:'✅',text:`Alta consistencia <b style="color:#22c55e">(CV ${u.cv}%)</b>: rinde de forma pareja todos los días`});
+  else if(u.cv<=30) pts.push({icon:'⚠️',text:`Consistencia moderada <b style="color:#f59e0b">(CV ${u.cv}%)</b>: hay variaciones importantes entre sus distintos días`});
+  else pts.push({icon:'🔴',text:`Alta variabilidad <b style="color:#ef4444">(CV ${u.cv}%)</b>: gran diferencia entre su mejor y peor día — vale explorar las causas`});
+  // Días sobre/bajo target
+  if(tgt&&u.dialist.length>0){
+    const dAbove=u.dialist.filter(d=>d.uph>=tgt).length;
+    const dTotal=u.dialist.length;
+    const pctD=Math.round(dAbove/dTotal*100);
+    if(dAbove===dTotal) pts.push({icon:'🏆',text:`Superó el target los <b style="color:#22c55e">${dTotal} días</b> trabajados en el período (100%)`});
+    else pts.push({icon:'📅',text:`Superó el target en <b>${dAbove} de ${dTotal} días</b> trabajados (<b style="color:${pctD>=70?'#22c55e':pctD>=50?'#f59e0b':'#ef4444'}">${pctD}%</b>)`});
+  }
+  // Mejor y peor día
+  if(u.mejor_dia&&u.peor_dia&&u.mejor_dia.uph!==u.peor_dia.uph){
+    const gap=u.mejor_dia.uph-u.peor_dia.uph;
+    pts.push({icon:'📊',text:`Brecha de <b>${gap} uds/h</b> entre su mejor día (<b style="color:#22c55e">${u.mejor_dia.uph} uds/h</b> el ${u.mejor_dia.fecha}) y su peor día (<b style="color:#ef4444">${u.peor_dia.uph} uds/h</b> el ${u.peor_dia.fecha})`});
+  }
+  return pts;
+}
+
 function opPeriodChange(btn,vista,usuario){
   btn.parentElement.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
@@ -752,7 +1021,7 @@ function renderTurno(t){
 }
 renderTurno('m'); renderTurno('t');
 
-// ── TARGETS PAGE
+// ── (targets tab removed)
 function drawTargets(){
   const tcEl=document.getElementById('target-cards');
   tcEl.innerHTML=TA.map(t=>{
