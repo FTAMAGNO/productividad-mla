@@ -737,14 +737,11 @@ function renderOpProfile(u){
   </div>
 
   <!-- KPIs -->
-  <div class="profile-kpis">
-    <div class="pkpi"><div class="v" style="color:#64748b">${u.uph_j}</div><div class="l">UPH 7h fijas</div></div>
+  <div class="profile-kpis" style="margin-bottom:16px">
     <div class="pkpi"><div class="v blue">${fmt(u.uds)}</div><div class="l">Total uds</div></div>
     <div class="pkpi"><div class="v">${fmt(Math.round(u.uds/u.dias))}</div><div class="l">Uds/día prom</div></div>
-    <div class="pkpi"><div class="v" style="color:${u.mejor_dia?'#22c55e':'#475569'}">${u.mejor_dia?u.mejor_dia.uph:'—'}</div><div class="l">Mejor día</div></div>
-    <div class="pkpi"><div class="v" style="color:${u.peor_dia?'#ef4444':'#475569'}">${u.peor_dia?u.peor_dia.uph:'—'}</div><div class="l">Peor día</div></div>
-  </div>
-  <div class="profile-kpis" style="margin-bottom:16px">
+    <div class="pkpi"><div class="v" style="color:${u.mejor_dia?'#22c55e':'#475569'}">${u.mejor_dia?u.mejor_dia.uph:'—'}</div><div class="l">Mejor día UPH</div></div>
+    <div class="pkpi"><div class="v" style="color:${u.peor_dia?'#ef4444':'#475569'}">${u.peor_dia?u.peor_dia.uph:'—'}</div><div class="l">Peor día UPH</div></div>
     <div class="pkpi"><div class="v" style="color:${trendCol}">${trendTxt}</div><div class="l">Tendencia (${u.trend_p1} → ${u.trend_p2})</div></div>
     <div class="pkpi"><div class="v">${u.cv}%</div><div class="l">Variabilidad (CV)</div></div>
     <div class="pkpi"><div class="v">${u.tareas.toLocaleString('es-AR')}</div><div class="l">Tareas totales</div></div>
@@ -797,23 +794,11 @@ function renderOpProfile(u){
     html+=`</div>`;
   }
 
-  // ÚLTIMOS DÍAS
-  const lastDias=u.dialist.slice(-15).reverse();
+  // EVOLUCIÓN SEMANAL POR RUTA
   html+=`<div class="profile-section">
-    <div class="profile-section-title">Últimos ${lastDias.length} días</div>
-    <div class="mini-table tw" style="max-height:220px">
-    <table><thead><tr>
-      <th>Fecha</th><th class="tr">UPH</th><th class="tr">Unidades</th>
-      <th class="tr">UPH 7h</th>
-    </tr></thead><tbody>`;
-  lastDias.forEach(d=>{
-    const row=OD.filter(r=>r.usuario===u.usuario&&r.fecha_str===d.fecha&&(!fr||r.RUTA===fr));
-    const jmin=row.reduce((a,r)=>a+r.jor_min,0);
-    const uph_j=jmin>0?+(d.uds/(jmin/60)).toFixed(1):0;
-    const tc=tgt?(d.uph>=tgt?'uhi':d.uph>=tgt*.85?'umid':'ulo'):'blue';
-    html+=`<tr><td>${d.fecha}</td><td class="tr ${tc}">${d.uph}</td><td class="tr">${fmt(d.uds)}</td><td class="tr" style="color:#64748b">${uph_j}</td></tr>`;
-  });
-  html+=`</tbody></table></div></div>`;
+    <div class="profile-section-title">Evolución semanal por ruta</div>
+    <canvas id="weekly-chart" height="160"></canvas>
+  </div>`;
 
   document.getElementById('op-profile').innerHTML=html;
   setTimeout(()=>renderOpPeriodCards(u.usuario),0);
@@ -867,6 +852,83 @@ function renderOpProfile(u){
       ctx.fillStyle='#475569'; ctx.font='9px Segoe UI'; ctx.textAlign='right';
       ctx.fillText(Math.round(maxY*f), pad.l-3, y+3);
     });
+    // ── EVOLUCIÓN SEMANAL POR RUTA
+    const wc=document.getElementById('weekly-chart');
+    if(wc){
+      const rutasU=[...new Set(OS_DATA.filter(r=>r.usuario===u.usuario).map(r=>r.RUTA))];
+      const semsU=[...new Set(OS_DATA.filter(r=>r.usuario===u.usuario).map(r=>r.semana))].sort((a,b)=>a-b);
+      const RCOLS={CARDS:'#3b82f6','XD POINT':'#8b5cf6','CORREO ARGENTINO':'#f59e0b',PICKIT:'#22c55e',FULL:'#06b6d4',OFF:'#64748b'};
+      if(semsU.length>=1){
+        const dpr2=window.devicePixelRatio||1;
+        const W2=wc.parentElement.clientWidth, H2=160;
+        wc.width=W2*dpr2; wc.height=H2*dpr2;
+        wc.style.width=W2+'px'; wc.style.height=H2+'px';
+        const ctx2=wc.getContext('2d'); ctx2.scale(dpr2,dpr2);
+        const pad2={l:38,r:10,t:14,b:30};
+        const cw2=W2-pad2.l-pad2.r, ch2=H2-pad2.t-pad2.b;
+        // calcular maxY considerando targets
+        let maxY2=0;
+        rutasU.forEach(r=>{
+          semsU.forEach(s=>{
+            const row=OS_DATA.find(d=>d.usuario===u.usuario&&d.RUTA===r&&d.semana===s);
+            if(row) maxY2=Math.max(maxY2,row.uph);
+          });
+          const rt=targetFor(r); if(rt) maxY2=Math.max(maxY2,rt);
+        });
+        maxY2=maxY2*1.15||100;
+        ctx2.fillStyle='#0f172a'; ctx2.fillRect(0,0,W2,H2);
+        // grid
+        [0,.5,1].forEach(f=>{
+          const y=pad2.t+ch2*(1-f);
+          ctx2.strokeStyle='#1e293b'; ctx2.lineWidth=1; ctx2.setLineDash([]);
+          ctx2.beginPath(); ctx2.moveTo(pad2.l,y); ctx2.lineTo(W2-pad2.r,y); ctx2.stroke();
+          ctx2.fillStyle='#475569'; ctx2.font='9px Segoe UI'; ctx2.textAlign='right';
+          ctx2.fillText(Math.round(maxY2*f),pad2.l-3,y+3);
+        });
+        // x labels
+        semsU.forEach((s,i)=>{
+          const x=pad2.l+i*(cw2/(semsU.length-1||1));
+          ctx2.fillStyle='#475569'; ctx2.font='9px Segoe UI'; ctx2.textAlign='center';
+          ctx2.fillText('S'+s,x,H2-6);
+        });
+        // target lines + series
+        rutasU.forEach(r=>{
+          const rc=RCOLS[r]||'#94a3b8';
+          const rt=targetFor(r);
+          if(rt){
+            const ty=pad2.t+ch2*(1-rt/maxY2);
+            ctx2.strokeStyle=rc+'50'; ctx2.lineWidth=1; ctx2.setLineDash([3,3]);
+            ctx2.beginPath(); ctx2.moveTo(pad2.l,ty); ctx2.lineTo(W2-pad2.r,ty); ctx2.stroke();
+            ctx2.setLineDash([]);
+          }
+          const pts2=semsU.map((s,i)=>{
+            const row=OS_DATA.find(d=>d.usuario===u.usuario&&d.RUTA===r&&d.semana===s);
+            return row?[pad2.l+i*(cw2/(semsU.length-1||1)), pad2.t+ch2*(1-row.uph/maxY2)]:null;
+          });
+          // line
+          ctx2.beginPath(); ctx2.setLineDash([]); ctx2.strokeStyle=rc; ctx2.lineWidth=2;
+          let moved=false;
+          pts2.forEach(p=>{if(!p) return; moved?ctx2.lineTo(p[0],p[1]):(ctx2.moveTo(p[0],p[1]),moved=true);});
+          ctx2.stroke();
+          // dots
+          pts2.forEach((p,i)=>{
+            if(!p) return;
+            const row=OS_DATA.find(d=>d.usuario===u.usuario&&d.RUTA===r&&d.semana===semsU[i]);
+            const dc=rt?(row.uph>=rt?'#22c55e':row.uph>=rt*.85?'#f59e0b':'#ef4444'):rc;
+            ctx2.beginPath(); ctx2.arc(p[0],p[1],4,0,Math.PI*2); ctx2.fillStyle=dc; ctx2.fill();
+          });
+        });
+        // leyenda
+        let lx=pad2.l;
+        rutasU.forEach(r=>{
+          const rc=RCOLS[r]||'#94a3b8';
+          ctx2.fillStyle=rc; ctx2.fillRect(lx,4,10,7);
+          ctx2.fillStyle='#94a3b8'; ctx2.font='9px Segoe UI'; ctx2.textAlign='left';
+          ctx2.fillText(r,lx+13,11);
+          lx+=ctx2.measureText(r).width+28;
+        });
+      }
+    }
   },50);
 }
 
@@ -882,34 +944,40 @@ function perfCategory(uph,tgt,tendencia){
 
 function generateTalkingPoints(u,tgt){
   const pts=[];
-  // Performance vs target
-  if(tgt){
-    const pct=Math.round(u.uph/tgt*100);
-    const gap=(u.uph-tgt).toFixed(1);
-    if(u.uph>=tgt) pts.push({icon:'✅',text:`Supera el target: <b style="color:#22c55e">${u.uph} uds/h</b> vs objetivo de ${tgt} uds/h (${pct}%)`});
-    else if(u.uph>=tgt*.85) pts.push({icon:'⚠️',text:`Cerca del target: <b style="color:#f59e0b">${u.uph} uds/h</b>, le faltan <b>${Math.abs(gap)} uds/h</b> para alcanzar el objetivo de ${tgt} uds/h (${pct}%)`});
-    else pts.push({icon:'🔴',text:`Por debajo del target: <b style="color:#ef4444">${u.uph} uds/h</b> vs objetivo de ${tgt} uds/h (${pct}%) — diferencia de <b>${Math.abs(gap)} uds/h</b>`});
-  }
+  // Performance por ruta con target
+  u.rutas.forEach(r=>{
+    const rt=targetFor(r.ruta);
+    if(!rt) return;
+    const pct=Math.round(r.uph/rt*100);
+    const gap=Math.abs(r.uph-rt).toFixed(1);
+    const badge=`<b style="color:#94a3b8">[${r.ruta}]</b>`;
+    if(r.uph>=rt) pts.push({icon:'✅',text:`${badge} <b style="color:#22c55e">${r.uph} uds/h</b> — sobre target de ${rt} uds/h (${pct}%)`});
+    else if(r.uph>=rt*.85) pts.push({icon:'⚠️',text:`${badge} <b style="color:#f59e0b">${r.uph} uds/h</b> — cerca del target de ${rt} uds/h (${pct}%), le faltan <b>${gap} uds/h</b>`});
+    else pts.push({icon:'🔴',text:`${badge} <b style="color:#ef4444">${r.uph} uds/h</b> — bajo target de ${rt} uds/h (${pct}%), diferencia de <b>${gap} uds/h</b>`});
+  });
+  // Rutas sin target
+  const rutasSinTarget=u.rutas.filter(r=>!targetFor(r.ruta));
+  if(rutasSinTarget.length) pts.push({icon:'ℹ️',text:`Trabaja en ${rutasSinTarget.map(r=>`<b>${r.ruta}</b> (${r.uph} uds/h)`).join(', ')} — sin target definido aún`});
   // Tendencia
   if(u.tendencia==='up') pts.push({icon:'📈',text:`Tendencia positiva: pasó de <b style="color:#94a3b8">${u.trend_p1}</b> a <b style="color:#22c55e">${u.trend_p2} uds/h</b> en la segunda mitad del período`});
-  else if(u.tendencia==='down') pts.push({icon:'📉',text:`Tendencia negativa: bajó de <b style="color:#94a3b8">${u.trend_p1}</b> a <b style="color:#ef4444">${u.trend_p2} uds/h</b> — revisar qué cambió en este período`});
-  else pts.push({icon:'➡️',text:`Rendimiento estable: promedia <b>${u.uph} uds/h</b> sin variaciones significativas entre la primera y segunda mitad del período`});
+  else if(u.tendencia==='down') pts.push({icon:'📉',text:`Tendencia negativa: bajó de <b style="color:#94a3b8">${u.trend_p1}</b> a <b style="color:#ef4444">${u.trend_p2} uds/h</b> — revisar qué cambió`});
+  else pts.push({icon:'➡️',text:`Rendimiento estable: promedia <b>${u.uph} uds/h</b> sin variaciones significativas entre la primera y segunda mitad`});
   // Consistencia
-  if(u.cv<=15) pts.push({icon:'✅',text:`Alta consistencia <b style="color:#22c55e">(CV ${u.cv}%)</b>: rinde de forma pareja todos los días`});
-  else if(u.cv<=30) pts.push({icon:'⚠️',text:`Consistencia moderada <b style="color:#f59e0b">(CV ${u.cv}%)</b>: hay variaciones importantes entre sus distintos días`});
+  if(u.cv<=15) pts.push({icon:'✅',text:`Alta consistencia <b style="color:#22c55e">(CV ${u.cv}%)</b>: rinde parejo todos los días`});
+  else if(u.cv<=30) pts.push({icon:'⚠️',text:`Consistencia moderada <b style="color:#f59e0b">(CV ${u.cv}%)</b>: hay variaciones importantes entre días`});
   else pts.push({icon:'🔴',text:`Alta variabilidad <b style="color:#ef4444">(CV ${u.cv}%)</b>: gran diferencia entre su mejor y peor día — vale explorar las causas`});
   // Días sobre/bajo target
   if(tgt&&u.dialist.length>0){
     const dAbove=u.dialist.filter(d=>d.uph>=tgt).length;
     const dTotal=u.dialist.length;
     const pctD=Math.round(dAbove/dTotal*100);
-    if(dAbove===dTotal) pts.push({icon:'🏆',text:`Superó el target los <b style="color:#22c55e">${dTotal} días</b> trabajados en el período (100%)`});
+    if(dAbove===dTotal) pts.push({icon:'🏆',text:`Superó el target los <b style="color:#22c55e">${dTotal} días</b> trabajados (100%)`});
     else pts.push({icon:'📅',text:`Superó el target en <b>${dAbove} de ${dTotal} días</b> trabajados (<b style="color:${pctD>=70?'#22c55e':pctD>=50?'#f59e0b':'#ef4444'}">${pctD}%</b>)`});
   }
   // Mejor y peor día
   if(u.mejor_dia&&u.peor_dia&&u.mejor_dia.uph!==u.peor_dia.uph){
     const gap=u.mejor_dia.uph-u.peor_dia.uph;
-    pts.push({icon:'📊',text:`Brecha de <b>${gap} uds/h</b> entre su mejor día (<b style="color:#22c55e">${u.mejor_dia.uph} uds/h</b> el ${u.mejor_dia.fecha}) y su peor día (<b style="color:#ef4444">${u.peor_dia.uph} uds/h</b> el ${u.peor_dia.fecha})`});
+    pts.push({icon:'📊',text:`Brecha de <b>${gap} uds/h</b> entre su mejor día (<b style="color:#22c55e">${u.mejor_dia.uph} uds/h</b> — ${u.mejor_dia.fecha}) y su peor día (<b style="color:#ef4444">${u.peor_dia.uph} uds/h</b> — ${u.peor_dia.fecha})`});
   }
   return pts;
 }
