@@ -998,6 +998,7 @@ function drawHourlyChart(usuario){
   horas.forEach((h,i)=>{
     const bx=pad.l+i*bw+bw/2;
     let base=0;
+    const total=rutasU.reduce((a,r)=>a+(byHR[`${h}|${r}`]?byHR[`${h}|${r}`].tareas:0),0);
     rutasU.forEach(r=>{
       const t=(byHR[`${h}|${r}`]||{tareas:0}).tareas;
       if(!t) return;
@@ -1007,6 +1008,11 @@ function drawHourlyChart(usuario){
       ctx.fillRect(bx-barW/2, by_, barW, bh);
       base+=bh;
     });
+    // total encima de la barra
+    if(total>0){
+      ctx.fillStyle='#e2e8f0'; ctx.font=`bold ${Math.max(8,Math.min(10,barW/3))}px Segoe UI`; ctx.textAlign='center';
+      ctx.fillText(total, bx, pad.t+ch-base-4);
+    }
     // label hora
     ctx.fillStyle='#475569'; ctx.font='9px Segoe UI'; ctx.textAlign='center';
     ctx.fillText(h+'h', bx, H-6);
