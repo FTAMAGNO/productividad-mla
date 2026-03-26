@@ -168,17 +168,6 @@ tbody td{padding:7px 10px;font-size:12px}
     </div>
   </div>
   <div id="route-cards" class="route-cards"></div>
-  <div class="section">
-    <div class="sh">Detalle por ruta y turno</div>
-    <div class="tw"><table>
-      <thead><tr>
-        <th>Fecha</th><th>Ruta</th><th>Turno</th>
-        <th class="tr">Unidades</th><th class="tr">UPH Ventana</th><th class="tr">UPH 7h</th><th class="tr">vs Target</th>
-        <th class="tr">Tareas</th><th class="tr">Operadores</th>
-      </tr></thead>
-      <tbody id="tb-dia"></tbody>
-    </table></div>
-  </div>
 </div>
 
 <!-- ══ POR OPERARIO ═════════════════════════════════════════════════════════ -->
@@ -564,36 +553,6 @@ function renderDia(){
       </div>
       ${tgt?`<div class="rc-pct"><div class="rc-pct-bar"><div class="rc-pct-fill" style="width:${pct}%;background:${uphColor}"></div></div><div class="rc-pct-txt" style="color:${uphColor}">${pct}% target</div></div>`:''}</div>`;
   }).join('');
-  // tabla detalle — agrupa OD por período seleccionado
-  const periodoKey = vista==='dia'?'fecha_str':vista==='semana'?'semana':'mes_str';
-  const detMap={};
-  OD.filter(r=>{
-    if(ft && r.turno!==ft) return false;
-    if(!ff) return true;
-    if(vista==='dia')    return r.fecha_str===ff;
-    if(vista==='semana') return 'Semana '+r.semana===ff;
-    if(vista==='mes')    return r.mes_str===ff;
-    return true;
-  }).forEach(r=>{
-    const k=`${r[periodoKey]}|${r.RUTA}|${ft||'ambos'}`;
-    if(!detMap[k]) detMap[k]={periodo:vista==='semana'?'Semana '+r.semana:r[periodoKey],RUTA:r.RUTA,turno:ft||'—',uds:0,net:0,jor:0,tareas:0,usrs:new Set()};
-    detMap[k].uds+=r.unidades; detMap[k].net+=r.net_min; detMap[k].jor+=r.jor_min;
-    detMap[k].tareas+=r.tareas; detMap[k].usrs.add(r.usuario);
-  });
-  const rows=Object.values(detMap).sort((a,b)=>a.periodo.localeCompare(b.periodo)||a.RUTA.localeCompare(b.RUTA));
-  document.getElementById('tb-dia').innerHTML=rows.map(r=>{
-    const tgt=targetFor(r.RUTA);
-    const uphV=r.net>0?+(r.uds/(r.net/60)).toFixed(1):0;
-    const uphJ=r.jor>0?+(r.uds/(r.jor/60)).toFixed(1):0;
-    return `<tr><td>${r.periodo}</td><td>${rutaBadge(r.RUTA)}</td>
-    <td>${r.turno==='—'?'—':`<span class="${r.turno==='Mañana'?'bm':'bt'}">${r.turno}</span>`}</td>
-    <td class="tr">${fmt(r.uds)}</td>
-    <td class="tr ${uphCls(uphV,tgt)}">${uphV}</td>
-    <td class="tr" style="color:#64748b">${uphJ}</td>
-    <td class="tr">${vsTarget(uphV,tgt)}</td>
-    <td class="tr">${fmt(r.tareas)}</td>
-    <td class="tr">${r.usrs.size}</td></tr>`;
-  }).join('');
 }
 renderDia();
 
@@ -771,11 +730,6 @@ function renderOpProfile(u){
     <div id="op-period-cards" class="route-cards" style="margin-bottom:0"></div>
   </div>`;
 
-  // TENDENCIA CHART
-  html+=`<div class="profile-section">
-    <div class="profile-section-title">Tendencia diaria</div>
-    <canvas id="trend-chart" height="120"></canvas>
-  </div>`;
 
   // RUTAS
   if(u.rutas.length>0){
@@ -817,56 +771,7 @@ function renderOpProfile(u){
   setTimeout(()=>renderOpPeriodCards(u.usuario),0);
 
   // Dibujar trend chart
-  setTimeout(()=>{
-    const c=document.getElementById('trend-chart');
-    if(!c||u.dialist.length<2) return;
-    const dpr=window.devicePixelRatio||1;
-    const W=c.parentElement.clientWidth, H=120;
-    c.width=W*dpr; c.height=H*dpr;
-    c.style.width=W+'px'; c.style.height=H+'px';
-    const ctx=c.getContext('2d'); ctx.scale(dpr,dpr);
-    const pad={l:36,r:8,t:8,b:28};
-    const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
-    const vals=u.dialist.map(d=>d.uph);
-    const labs=u.dialist.map(d=>d.fecha.slice(5));
-    const maxY=Math.max(...vals, tgt||0)*1.1||1;
-    ctx.fillStyle='#0f172a'; ctx.fillRect(0,0,W,H);
-    // target line
-    if(tgt){
-      const ty=pad.t+ch*(1-tgt/maxY);
-      ctx.strokeStyle='#ef444460'; ctx.lineWidth=1; ctx.setLineDash([4,3]);
-      ctx.beginPath(); ctx.moveTo(pad.l,ty); ctx.lineTo(W-pad.r,ty); ctx.stroke();
-      ctx.setLineDash([]); ctx.fillStyle='#ef4444'; ctx.font='10px Segoe UI'; ctx.textAlign='left';
-      ctx.fillText('Target '+tgt, pad.l+4, ty-3);
-    }
-    // area
-    const pts=vals.map((v,i)=>[pad.l+i*(cw/(vals.length-1||1)), pad.t+ch*(1-v/maxY)]);
-    ctx.beginPath(); ctx.moveTo(pts[0][0],pad.t+ch);
-    pts.forEach(p=>ctx.lineTo(p[0],p[1]));
-    ctx.lineTo(pts[pts.length-1][0],pad.t+ch); ctx.closePath();
-    ctx.fillStyle=col+'22'; ctx.fill();
-    // line
-    ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));
-    ctx.strokeStyle=col; ctx.lineWidth=2; ctx.stroke();
-    // dots
-    pts.forEach((p,i)=>{
-      const dc=tgt?(vals[i]>=tgt?'#22c55e':vals[i]>=tgt*.85?'#f59e0b':'#ef4444'):col;
-      ctx.beginPath(); ctx.arc(p[0],p[1],4,0,Math.PI*2); ctx.fillStyle=dc; ctx.fill();
-    });
-    // labels (cada 2)
-    labs.forEach((l,i)=>{
-      if(i%Math.max(1,Math.floor(labs.length/8))!==0) return;
-      ctx.fillStyle='#475569'; ctx.font='9px Segoe UI'; ctx.textAlign='center';
-      ctx.fillText(l, pts[i][0], H-6);
-    });
-    // y axis
-    [0,.5,1].forEach(f=>{
-      const y=pad.t+ch*(1-f);
-      ctx.fillStyle='#475569'; ctx.font='9px Segoe UI'; ctx.textAlign='right';
-      ctx.fillText(Math.round(maxY*f), pad.l-3, y+3);
-    });
-    drawHourlyChart(u.usuario);
-  },50);
+  setTimeout(()=>{ drawHourlyChart(u.usuario); },50);
 }
 
 function perfCategory(uph,tgt,tendencia){
