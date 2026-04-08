@@ -439,13 +439,6 @@ function stab(btn,id){
   document.getElementById(id).classList.add('active');
 }
 
-// ── FECHAS EN FILTROS (mañana/tarde siempre por día)
-ALL_FECHAS.forEach(f=>{
-  ['mf-fecha','tf-fecha'].forEach(id=>{
-    const o=document.createElement('option');o.value=f;o.textContent=f;
-    document.getElementById(id).appendChild(o.cloneNode(true));
-  });
-});
 
 // Día tab: populate dinámica según vista
 const ALL_SEMANAS_JS=[10, 11, 12, 13, 14, 15];
@@ -964,93 +957,7 @@ renderOpList();
 
 // ── TURNO TABLES
 
-// ── (targets tab removed)
-function drawTargets(){
-  const tcEl=document.getElementById('target-cards');
-  tcEl.innerHTML=TA.map(t=>{
-    const tgt=t.uph_target_actual;
-    const gap=tgt?+(t.uph_p50-tgt).toFixed(1):null;
-    const rec=tgt
-      ? (t.uph_p50>=tgt
-          ? `La mediana (${t.uph_p50} uds/h) supera el target. El target de <b>${tgt} uds/h</b> parece alcanzable. Podría subirse al P75: <b>${t.uph_p75} uds/h</b>.`
-          : `La mediana (${t.uph_p50} uds/h) está ${Math.abs(gap)} uds/h por debajo del target. Se recomienda revisar el target o reforzar entrenamiento.`)
-      : `Sin target definido. Basado en los datos, se sugiere un target de <b>${t.uph_p50} uds/h</b> (mediana) o <b>${t.uph_p75} uds/h</b> como objetivo exigente.`;
-    return `<div class="tg-card">
-      <div class="tg-title">${rutaBadge(t.ruta)} &nbsp; ${t.ruta}
-        ${tgt?`<span style="margin-left:10px;font-size:12px;color:#64748b">Target actual: <b>${tgt} uds/h</b></span>`:''}</div>
-      <div class="tg-grid">
-        <div class="tg-item"><div class="v" style="color:#ef4444">${t.uph_p25}</div><div class="l">P25</div></div>
-        <div class="tg-item"><div class="v" style="color:#f59e0b">${t.uph_p50}</div><div class="l">P50 (mediana)</div></div>
-        <div class="tg-item"><div class="v" style="color:#22c55e">${t.uph_p75}</div><div class="l">P75</div></div>
-        <div class="tg-item"><div class="v" style="color:#60a5fa">${t.uph_promedio}</div><div class="l">Promedio</div></div>
-        <div class="tg-item"><div class="v" style="color:#a78bfa">${t.uph_max}</div><div class="l">Máximo</div></div>
-      </div>
-      <div class="rec-box">${rec}</div>
-    </div>`;
-  }).join('');
-  // chart
-  drawTargetChart();
-}
 
-function drawTargetChart(){
-  const c=document.getElementById('cTargets');
-  const dpr=window.devicePixelRatio||1;
-  const W=c.parentElement.clientWidth-32, H=260;
-  c.width=W*dpr; c.height=H*dpr;
-  c.style.width=W+'px'; c.style.height=H+'px';
-  const ctx=c.getContext('2d'); ctx.scale(dpr,dpr);
-  const pad={l:44,r:12,t:20,b:30};
-  const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
-  // collect all op-ruta combos
-  const pts=[]; const colors=['#3b82f6','#8b5cf6','#f59e0b','#22c55e'];
-  TA.forEach((t,ti)=>{
-    const tgt=t.uph_target_actual;
-    OG.filter(r=>r.RUTA===t.ruta).forEach(r=>pts.push({x:ti,y:r.uph,u:r.usuario,c:colors[ti%colors.length],tgt}));
-  });
-  const maxY=Math.max(...pts.map(p=>p.y),300)+20;
-  ctx.fillStyle='#0f172a'; ctx.fillRect(0,0,W,H);
-  [0,.25,.5,.75,1].forEach(f=>{
-    const y=pad.t+ch*(1-f);
-    ctx.strokeStyle='#1e293b'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
-    ctx.fillStyle='#475569'; ctx.font='10px Segoe UI'; ctx.textAlign='right';
-    ctx.fillText(Math.round(maxY*f), pad.l-4, y+3);
-  });
-  const bw=cw/TA.length;
-  TA.forEach((t,ti)=>{
-    const cx2=pad.l+ti*bw+bw/2;
-    const tgt=t.uph_target_actual;
-    // target line
-    if(tgt){
-      const ty=pad.t+ch*(1-tgt/maxY);
-      ctx.strokeStyle='#ef4444'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
-      ctx.beginPath(); ctx.moveTo(cx2-bw*0.4,ty); ctx.lineTo(cx2+bw*0.4,ty); ctx.stroke();
-      ctx.setLineDash([]);
-    }
-    // dots
-    pts.filter(p=>p.x===ti).forEach(p=>{
-      const py=pad.t+ch*(1-p.y/maxY);
-      const col=p.tgt?(p.y>=p.tgt?'#22c55e':p.y>=p.tgt*.85?'#f59e0b':'#ef4444'):colors[ti%colors.length];
-      ctx.beginPath(); ctx.arc(cx2+(Math.random()-.5)*20, py, 4, 0, Math.PI*2);
-      ctx.fillStyle=col+'cc'; ctx.fill();
-    });
-    ctx.fillStyle='#94a3b8'; ctx.font='11px Segoe UI'; ctx.textAlign='center';
-    ctx.fillText(t.ruta, cx2, H-8);
-  });
-  // leyenda
-  ctx.fillStyle='#ef4444'; ctx.setLineDash([4,3]); ctx.lineWidth=1.5;
-  ctx.beginPath(); ctx.moveTo(pad.l,10); ctx.lineTo(pad.l+20,10); ctx.stroke();
-  ctx.setLineDash([]); ctx.fillStyle='#94a3b8'; ctx.font='11px Segoe UI'; ctx.textAlign='left';
-  ctx.fillText('Target',pad.l+24,14);
-}
-
-// populate turno selects con fechas
-ALL_FECHAS.forEach(f=>{
-  ['mf-fecha','tf-fecha'].forEach(id=>{
-    const o=document.createElement('option');o.value=f;o.textContent=f;
-    document.getElementById(id).appendChild(o.cloneNode(true));
-  });
-});
 </script>
 </body>
 </html>
