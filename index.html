@@ -145,8 +145,6 @@ tbody td{padding:7px 10px;font-size:12px}
 <div class="tabs-nav">
   <button class="tab-btn active" onclick="goTab('dia',this)">Resumen del Día</button>
   <button class="tab-btn" onclick="goTab('operarios',this)">Por Operario</button>
-  <button class="tab-btn" onclick="goTab('manana',this)">Turno Mañana</button>
-  <button class="tab-btn" onclick="goTab('tarde',this)">Turno Tarde</button>
   <button class="tab-btn" onclick="goTab('guia',this)">Guía</button>
 </div>
 
@@ -201,44 +199,6 @@ tbody td{padding:7px 10px;font-size:12px}
 </div>
 
 <!-- ══ TURNO MAÑANA ═════════════════════════════════════════════════════════ -->
-<div id="page-manana" class="page">
-  <div class="gf">
-    <div><label>Fecha</label><select id="mf-fecha" onchange="renderTurno('m')"><option value="">Todas</option></select></div>
-    <div><label>Ruta</label><select id="mf-ruta" onchange="renderTurno('m')"><option value="">Todas</option><option>CARDS</option> <option>XD POINT</option> <option>CORREO ARGENTINO</option> <option>PICKIT</option> <option>FULL</option> <option>OFF</option></select></div>
-  </div>
-  <div class="section"><div class="sh">Operarios — Turno Mañana <span class="bm">06:00–15:00</span></div>
-  <div class="tw"><table><thead><tr>
-    <th>#</th><th onclick="sortT('mm','usuario')">Operario</th><th onclick="sortT('mm','RUTA')">Ruta</th>
-    <th class="tr" onclick="sortT('mm','uph')">UPH Ventana</th>
-    <th class="tr" onclick="sortT('mm','uph_j')">UPH 7h</th>
-    <th class="tr">vs Target</th>
-    <th class="tr" onclick="sortT('mm','unidades')">Unidades</th>
-    <th class="tr" onclick="sortT('mm','upd')">Uds/día prom</th>
-    <th class="tr" onclick="sortT('mm','tareas')">Tareas</th>
-    <th class="tr" onclick="sortT('mm','dias')">Días</th>
-    <th style="min-width:90px">Rendimiento</th>
-  </tr></thead><tbody id="tb-mm"></tbody></table></div></div>
-</div>
-
-<!-- ══ TURNO TARDE ══════════════════════════════════════════════════════════ -->
-<div id="page-tarde" class="page">
-  <div class="gf">
-    <div><label>Fecha</label><select id="tf-fecha" onchange="renderTurno('t')"><option value="">Todas</option></select></div>
-    <div><label>Ruta</label><select id="tf-ruta" onchange="renderTurno('t')"><option value="">Todas</option><option>CARDS</option> <option>XD POINT</option> <option>CORREO ARGENTINO</option> <option>PICKIT</option> <option>FULL</option> <option>OFF</option></select></div>
-  </div>
-  <div class="section"><div class="sh">Operarios — Turno Tarde <span class="bt">14:00–23:00</span></div>
-  <div class="tw"><table><thead><tr>
-    <th>#</th><th onclick="sortT('mt','usuario')">Operario</th><th onclick="sortT('mt','RUTA')">Ruta</th>
-    <th class="tr" onclick="sortT('mt','uph')">UPH Ventana</th>
-    <th class="tr" onclick="sortT('mt','uph_j')">UPH 7h</th>
-    <th class="tr">vs Target</th>
-    <th class="tr" onclick="sortT('mt','unidades')">Unidades</th>
-    <th class="tr" onclick="sortT('mt','upd')">Uds/día prom</th>
-    <th class="tr" onclick="sortT('mt','tareas')">Tareas</th>
-    <th class="tr" onclick="sortT('mt','dias')">Días</th>
-    <th style="min-width:90px">Rendimiento</th>
-  </tr></thead><tbody id="tb-mt"></tbody></table></div></div>
-</div>
 
 <!-- ══ GUÍA ═══════════════════════════════════════════════════════════════ -->
 <div id="page-guia" class="page">
@@ -266,10 +226,6 @@ tbody td{padding:7px 10px;font-size:12px}
         <div style="background:#0f172a;border-radius:8px;padding:14px;border-left:3px solid #8b5cf6">
           <div style="font-weight:700;color:#a78bfa;margin-bottom:6px">👤 Por Operario</div>
           <div style="color:#94a3b8;font-size:12px;line-height:1.7">Perfil detallado de cada operario. Seleccioná uno de la lista izquierda para ver su rendimiento, tendencia, puntos de feedback y evolución por período.</div>
-        </div>
-        <div style="background:#0f172a;border-radius:8px;padding:14px;border-left:3px solid #60a5fa">
-          <div style="font-weight:700;color:#60a5fa;margin-bottom:6px">🌅 Turno Mañana / 🌆 Turno Tarde</div>
-          <div style="color:#94a3b8;font-size:12px;line-height:1.7">Ranking de operarios por turno. Ordenable por cualquier columna. Filtrá por fecha y ruta para ver el rendimiento en un día específico.</div>
         </div>
         <div style="background:#0f172a;border-radius:8px;padding:14px;border-left:3px solid #22c55e">
           <div style="font-weight:700;color:#4ade80;margin-bottom:6px">📖 Guía (esta página)</div>
