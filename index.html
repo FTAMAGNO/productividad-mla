@@ -963,38 +963,6 @@ function renderOpPeriodCards(usuario){
 renderOpList();
 
 // ── TURNO TABLES
-function renderTurno(t){
-  const isM=t==='m';
-  const ff=document.getElementById((isM?'mf':'tf')+'-fecha').value;
-  const fr=document.getElementById((isM?'mf':'tf')+'-ruta').value;
-  const turnoName=isM?'Mañana':'Tarde';
-  const st=stateT[isM?'mm':'mt']||{k:'uph',d:-1};
-  // filtrar OG
-  let data=OG.filter(r=>r.turno===turnoName&&(!fr||r.RUTA===fr));
-  if(ff){
-    // cuando hay filtro de fecha, usar op_dia
-    const od=OD.filter(r=>r.turno===turnoName&&(!fr||r.RUTA===fr)&&r.fecha_str===ff);
-    data=od;
-  }
-  data.sort((a,b)=>{ const av=a[st.k],bv=b[st.k]; return typeof av==='string'?av.localeCompare(bv)*st.d:(av-bv)*st.d; });
-  const maxUph=Math.max(...data.map(r=>r.uph),1);
-  const tbId=isM?'tb-mm':'tb-mt';
-  document.getElementById(tbId).innerHTML=data.map((r,i)=>{
-    const tgt=targetFor(r.RUTA);
-    return `<tr>
-      <td class="tc" style="color:#475569">${i+1}</td>
-      <td><b>${r.usuario}</b></td><td>${rutaBadge(r.RUTA)}</td>
-      <td class="tr ${uphCls(r.uph,tgt)}">${r.uph}</td>
-      <td class="tr" style="color:#64748b">${r.uph_j||'—'}</td>
-      <td class="tr">${vsTarget(r.uph,tgt)}</td>
-      <td class="tr">${fmt(r.unidades)}</td>
-      <td class="tr">${fmt(r.upd||0)}</td>
-      <td class="tr">${fmt(r.tareas)}</td>
-      <td class="tr">${r.dias||'—'}</td>
-      <td>${bar(r.uph,maxUph,isM?'bfm':'bft')}</td></tr>`;
-  }).join('');
-}
-renderTurno('m'); renderTurno('t');
 
 // ── (targets tab removed)
 function drawTargets(){
