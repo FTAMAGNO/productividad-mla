@@ -723,16 +723,6 @@ function renderOpProfile(u){
   // PERIOD FILTER + ROUTE CARDS
   html+=`
   <div class="profile-section" style="margin-bottom:16px">
-    <div class="sh" style="margin-bottom:10px">Tarjetas por período</div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-      <div class="stabs" style="margin:0">
-        <button class="stab active" onclick="opPeriodChange(this,'global','${u.usuario}')">Global</button>
-        <button class="stab" onclick="opPeriodChange(this,'dia','${u.usuario}')">Por Día</button>
-        <button class="stab" onclick="opPeriodChange(this,'semana','${u.usuario}')">Por Semana</button>
-        <button class="stab" onclick="opPeriodChange(this,'mes','${u.usuario}')">Por Mes</button>
-      </div>
-      <select id="op-period-sel" style="display:none" data-vista="global" data-usuario="${u.usuario}" onchange="renderOpPeriodCards(this.dataset.usuario)"></select>
-    </div>
     <div id="op-period-cards" class="route-cards" style="margin-bottom:0"></div>
   </div>`;
 
@@ -756,20 +746,8 @@ function renderOpProfile(u){
   }
 
   // BIPEOS POR HORA
-  const hDates=[...new Set(OH.filter(r=>r.usuario===u.usuario).map(r=>r.fecha_str))].sort().reverse();
-  const hSems=[...new Set(OH.filter(r=>r.usuario===u.usuario).map(r=>r.semana))].sort((a,b)=>b-a);
   html+=`<div class="profile-section">
-    <div class="profile-section-title" style="justify-content:space-between;align-items:center;display:flex;flex-wrap:wrap;gap:6px">
-      <span>Bipeos por hora</span>
-      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-        <div class="stabs" style="margin:0" id="hourly-tabs">
-          <button class="stab active" onclick="hourlyChange(this,'global','${u.usuario}')">Global</button>
-          <button class="stab" onclick="hourlyChange(this,'semana','${u.usuario}')">Semana</button>
-          <button class="stab" onclick="hourlyChange(this,'dia','${u.usuario}')">Día</button>
-        </div>
-        <select id="hourly-sel" style="display:none" data-vista="global" data-usuario="${u.usuario}" onchange="drawHourlyChart(this.dataset.usuario)"></select>
-      </div>
-    </div>
+    <div class="profile-section-title">Bipeos por hora</div>
     <canvas id="hourly-chart" height="160" style="margin-top:10px"></canvas>
   </div>`;
 
@@ -854,17 +832,17 @@ function hourlyChange(btn,vista,usuario){
 function drawHourlyChart(usuario){
   const c=document.getElementById('hourly-chart');
   if(!c) return;
-  const sel=document.getElementById('hourly-sel');
-  const vista=sel?sel.dataset.vista||'global':'global';
-  const period=sel?sel.value:'';
-
+  // Usar filtros globales
+  const vista=document.getElementById('of-vista')?document.getElementById('of-vista').value:'global';
+  const period=document.getElementById('of-periodo')?document.getElementById('of-periodo').value:'';
   const rutaFiltro=document.getElementById('of-ruta')?document.getElementById('of-ruta').value:'';
+
   let rows=OH.filter(r=>r.usuario===usuario&&(!rutaFiltro||r.RUTA===rutaFiltro));
   if(vista==='dia'&&period) rows=rows.filter(r=>r.fecha_str===period);
   else if(vista==='semana'&&period){
     const sem=parseInt(period.replace('Semana ',''));
     rows=rows.filter(r=>r.semana===sem);
-  }
+  } else if(vista==='mes'&&period) rows=rows.filter(r=>r.mes_str===period);
 
   // Agrupar por hora+ruta
   const byHR={};
@@ -962,20 +940,20 @@ function opPeriodChange(btn,vista,usuario){
 }
 
 function renderOpPeriodCards(usuario){
-  const sel=document.getElementById('op-period-sel');
-  if(!sel) return;
-  const vista=sel.dataset.vista||'global';
-  const period=sel.value;
+  // Usar filtros globales
+  const vista=document.getElementById('of-vista')?document.getElementById('of-vista').value:'global';
+  const period=document.getElementById('of-periodo')?document.getElementById('of-periodo').value:'';
+  const fr=document.getElementById('of-ruta')?document.getElementById('of-ruta').value:'';
   let rows;
-  if(vista==='global'){
-    rows=OG.filter(r=>r.usuario===usuario);
+  if(vista==='global'||!period){
+    rows=OG.filter(r=>r.usuario===usuario&&(!fr||r.RUTA===fr));
   } else if(vista==='dia'){
-    rows=OD.filter(r=>r.usuario===usuario&&(!period||r.fecha_str===period));
+    rows=OD.filter(r=>r.usuario===usuario&&r.fecha_str===period&&(!fr||r.RUTA===fr));
   } else if(vista==='semana'){
-    const sem=period?parseInt(period.replace('Semana ','')):null;
-    rows=OS_DATA.filter(r=>r.usuario===usuario&&(!sem||r.semana===sem));
+    const sem=parseInt(period.replace('Semana ',''));
+    rows=OD.filter(r=>r.usuario===usuario&&r.semana===sem&&(!fr||r.RUTA===fr));
   } else {
-    rows=OM.filter(r=>r.usuario===usuario&&(!period||r.mes_str===period));
+    rows=OD.filter(r=>r.usuario===usuario&&r.mes_str===period&&(!fr||r.RUTA===fr));
   }
   const byRuta={};
   rows.forEach(r=>{
