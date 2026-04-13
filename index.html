@@ -170,22 +170,22 @@ tbody td{padding:7px 10px;font-size:12px}
 
 <!-- ══ POR OPERARIO ═════════════════════════════════════════════════════════ -->
 <div id="page-operarios" class="page">
-  <div class="gf" style="margin-bottom:14px">
-    <div><label>Turno</label>
-      <select id="of-turno" onchange="renderOpList()">
-        <option value="">Ambos</option><option>Mañana</option><option>Tarde</option>
-      </select>
-    </div>
-    <div><label>Ruta</label>
-      <select id="of-ruta" onchange="renderOpList()">
-        <option value="">Todas</option>
-        <option>CARDS</option> <option>XD POINT</option> <option>CORREO ARGENTINO</option> <option>PICKIT</option> <option>FULL</option> <option>OFF</option>
-      </select>
-    </div>
-  </div>
   <div class="op-layout">
     <!-- LISTA IZQUIERDA -->
     <div class="op-list-wrap">
+      <div class="gf" style="margin-bottom:10px;padding:0">
+        <div><label>Turno</label>
+          <select id="of-turno" onchange="renderOpList()">
+            <option value="">Ambos</option><option>Mañana</option><option>Tarde</option>
+          </select>
+        </div>
+        <div><label>Ruta</label>
+          <select id="of-ruta" onchange="renderOpList()">
+            <option value="">Todas</option>
+            <option>CARDS</option> <option>XD POINT</option> <option>CORREO ARGENTINO</option> <option>PICKIT</option> <option>FULL</option> <option>OFF</option>
+          </select>
+        </div>
+      </div>
       <div class="op-list-search">
         <input id="op-search" placeholder="Buscar operario..." oninput="renderOpList()">
       </div>
@@ -494,13 +494,9 @@ function renderDia(){
           <div class="v" style="color:${uphColor}">${uphV}</div>
           <div class="l">UPH ventana</div>
         </div>
-        <div class="rc-stat">
-          <div class="v" style="color:#64748b;font-size:18px">${uphJ}</div>
-          <div class="l">UPH 7h fijas</div>
-        </div>
         <div class="rc-stat"><div class="v blue">${fmt(d.uds)}</div><div class="l">Unidades</div></div>
       </div>
-      ${tgt?`<div class="rc-pct"><div class="rc-pct-bar"><div class="rc-pct-fill" style="width:${pct}%;background:${uphColor}"></div></div><div class="rc-pct-txt" style="color:${uphColor}">${pct}% target</div></div>`:''}</div>`;
+      ${tgt?`<div class="rc-pct"><div class="rc-pct-bar"><div class="rc-pct-fill" style="width:${Math.min(100,pct)}%;background:${uphColor}"></div></div><div class="rc-pct-txt" style="color:${uphColor}">${pct}% target</div></div>`:''}</div>`;
   }).join('');
 }
 renderDia();
@@ -801,7 +797,8 @@ function drawHourlyChart(usuario){
   const vista=sel?sel.dataset.vista||'global':'global';
   const period=sel?sel.value:'';
 
-  let rows=OH.filter(r=>r.usuario===usuario);
+  const rutaFiltro=document.getElementById('of-ruta')?document.getElementById('of-ruta').value:'';
+  let rows=OH.filter(r=>r.usuario===usuario&&(!rutaFiltro||r.RUTA===rutaFiltro));
   if(vista==='dia'&&period) rows=rows.filter(r=>r.fecha_str===period);
   else if(vista==='semana'&&period){
     const sem=parseInt(period.replace('Semana ',''));
