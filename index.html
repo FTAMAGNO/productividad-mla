@@ -170,22 +170,36 @@ tbody td{padding:7px 10px;font-size:12px}
 
 <!-- ══ POR OPERARIO ═════════════════════════════════════════════════════════ -->
 <div id="page-operarios" class="page">
+  <!-- FILTROS ARRIBA -->
+  <div class="gf" style="margin-bottom:14px">
+    <div><label>Turno</label>
+      <select id="of-turno" onchange="opFilterChange()">
+        <option value="">Ambos</option><option>Mañana</option><option>Tarde</option>
+      </select>
+    </div>
+    <div><label>Ruta</label>
+      <select id="of-ruta" onchange="opFilterChange()">
+        <option value="">Todas</option>
+        <option>CARDS</option> <option>XD POINT</option> <option>CORREO ARGENTINO</option> <option>PICKIT</option> <option>FULL</option> <option>OFF</option>
+      </select>
+    </div>
+    <div><label>Vista</label>
+      <select id="of-vista" onchange="opVistaChange()">
+        <option value="global">Global</option>
+        <option value="mes">Por Mes</option>
+        <option value="semana">Por Semana</option>
+        <option value="dia">Por Día</option>
+      </select>
+    </div>
+    <div><label>Período</label>
+      <select id="of-periodo" onchange="opFilterChange()">
+        <option value="">Todos</option>
+      </select>
+    </div>
+  </div>
   <div class="op-layout">
     <!-- LISTA IZQUIERDA -->
     <div class="op-list-wrap">
-      <div class="gf" style="margin-bottom:10px;padding:0">
-        <div><label>Turno</label>
-          <select id="of-turno" onchange="renderOpList()">
-            <option value="">Ambos</option><option>Mañana</option><option>Tarde</option>
-          </select>
-        </div>
-        <div><label>Ruta</label>
-          <select id="of-ruta" onchange="renderOpList()">
-            <option value="">Todas</option>
-            <option>CARDS</option> <option>XD POINT</option> <option>CORREO ARGENTINO</option> <option>PICKIT</option> <option>FULL</option> <option>OFF</option>
-          </select>
-        </div>
-      </div>
       <div class="op-list-search">
         <input id="op-search" placeholder="Buscar operario..." oninput="renderOpList()">
       </div>
@@ -509,17 +523,64 @@ function sortT(tbl,key){
   if(stateT[tbl].k===key) stateT[tbl].d*=-1; else{stateT[tbl].k=key;stateT[tbl].d=-1;}
   renderOp();
 }
+
+function opVistaChange(){
+  const vista=document.getElementById('of-vista').value;
+  const sel=document.getElementById('of-periodo');
+  sel.innerHTML='<option value="">Todos</option>';
+  let opts=[];
+  if(vista==='dia') opts=ALL_FECHAS;
+  else if(vista==='semana') opts=ALL_SEMANAS_JS.map(s=>'Semana '+s);
+  else if(vista==='mes') opts=ALL_MESES_JS;
+  opts.forEach(o=>{ const el=document.createElement('option'); el.value=o; el.textContent=o; sel.appendChild(el); });
+  opFilterChange();
+}
+
+function opFilterChange(){
+  selectedOp=null;
+  document.getElementById('op-profile').innerHTML='<div class="profile-empty">← Seleccioná un operario para ver su perfil</div>';
+  renderOpList();
+}
+
+function getOpBaseData(){
+  // Devuelve el dataset filtrado por vista+período
+  const vista=document.getElementById('of-vista').value;
+  const periodo=document.getElementById('of-periodo').value;
+  if(vista==='global'||!periodo) return {base:OG, detail:OD};
+  // Filtrar OD por período y re-agregar como "OG temporal"
+  let detFiltered=OD;
+  if(vista==='dia') detFiltered=OD.filter(r=>r.fecha_str===periodo);
+  else if(vista==='semana'){ const s=parseInt(periodo.replace('Semana ','')); detFiltered=OD.filter(r=>r.semana===s); }
+  else if(vista==='mes') detFiltered=OD.filter(r=>r.mes_str===periodo);
+  // Agregar a nivel operario-ruta
+  const byKey={};
+  detFiltered.forEach(r=>{
+    const k=r.usuario+'|'+r.RUTA;
+    if(!byKey[k]) byKey[k]={usuario:r.usuario,RUTA:r.RUTA,turno:r.turno,net_min:0,jor_min:0,unidades:0,tareas:0,dias:0,uph:0,uph_j:0};
+    byKey[k].net_min+=r.net_min; byKey[k].jor_min+=r.jor_min;
+    byKey[k].unidades+=r.unidades; byKey[k].tareas+=r.tareas; byKey[k].dias+=1;
+  });
+  const agg=Object.values(byKey).map(r=>{
+    r.uph=r.net_min>0?+(r.unidades/(r.net_min/60)).toFixed(1):0;
+    r.uph_j=r.jor_min>0?+(r.unidades/(r.jor_min/60)).toFixed(1):0;
+    return r;
+  });
+  return {base:agg, detail:detFiltered};
+}
+
 function filterOG(){
   const fr=document.getElementById('of-ruta').value;
   const ft=document.getElementById('of-turno').value;
-  return OG.filter(r=>(!fr||r.RUTA===fr)&&(!ft||r.turno===ft));
+  return getOpBaseData().base.filter(r=>(!fr||r.RUTA===fr)&&(!ft||r.turno===ft));
 }
+
 // ── Precalcular perfiles de operarios desde OD + OG
 function buildProfiles(){
   const fr=document.getElementById('of-ruta').value;
   const ft=document.getElementById('of-turno').value;
+  const {base, detail}=getOpBaseData();
   const byUsr={};
-  OG.filter(r=>(!fr||r.RUTA===fr)&&(!ft||r.turno===ft)).forEach(r=>{
+  base.filter(r=>(!fr||r.RUTA===fr)&&(!ft||r.turno===ft)).forEach(r=>{
     if(!byUsr[r.usuario]) byUsr[r.usuario]={usuario:r.usuario,turno:r.turno,net:0,jor:0,uds:0,tareas:0,dias:0,rutas:[]};
     const u=byUsr[r.usuario];
     u.net+=r.net_min; u.jor+=r.jor_min; u.uds+=r.unidades; u.tareas+=r.tareas;
@@ -530,10 +591,10 @@ function buildProfiles(){
     u.uph  = u.net>0 ? +(u.uds/(u.net/60)).toFixed(1) : 0;
     u.uph_j= u.jor>0 ? +(u.uds/(u.jor/60)).toFixed(1) : 0;
     // Tendencia: promedio primera mitad vs segunda mitad de días trabajados
-    const dias_u = [...new Set(OD.filter(r=>r.usuario===u.usuario&&(!fr||r.RUTA===fr)).map(r=>r.fecha_str))].sort();
+    const dias_u = [...new Set(detail.filter(r=>r.usuario===u.usuario&&(!fr||r.RUTA===fr)).map(r=>r.fecha_str))].sort();
     const mid = Math.floor(dias_u.length/2);
     const calc = (ds)=>{
-      const rows=OD.filter(r=>r.usuario===u.usuario&&(!fr||r.RUTA===fr)&&ds.includes(r.fecha_str));
+      const rows=detail.filter(r=>r.usuario===u.usuario&&(!fr||r.RUTA===fr)&&ds.includes(r.fecha_str));
       const n=rows.reduce((a,r)=>a+r.net_min,0), ud=rows.reduce((a,r)=>a+r.unidades,0);
       return n>0?+(ud/(n/60)).toFixed(1):0;
     };
@@ -541,7 +602,7 @@ function buildProfiles(){
     u.tendencia = p2>p1*1.03?'up':p2<p1*0.97?'down':'stable';
     u.trend_p1=p1; u.trend_p2=p2;
     // Mejor/peor día (UPH)
-    const dias_data=OD.filter(r=>r.usuario===u.usuario&&(!fr||r.RUTA===fr));
+    const dias_data=detail.filter(r=>r.usuario===u.usuario&&(!fr||r.RUTA===fr));
     const byDia={};
     dias_data.forEach(r=>{
       if(!byDia[r.fecha_str]) byDia[r.fecha_str]={net:0,uds:0};
