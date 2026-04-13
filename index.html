@@ -747,7 +747,7 @@ function renderOpProfile(u){
 
   // BIPEOS POR HORA
   html+=`<div class="profile-section">
-    <div class="profile-section-title">Bipeos por hora</div>
+    <div class="profile-section-title">Unidades por hora</div>
     <canvas id="hourly-chart" height="160" style="margin-top:10px"></canvas>
   </div>`;
 
@@ -844,12 +844,12 @@ function drawHourlyChart(usuario){
     rows=rows.filter(r=>r.semana===sem);
   } else if(vista==='mes'&&period) rows=rows.filter(r=>r.mes_str===period);
 
-  // Agrupar por hora+ruta
+  // Agrupar por hora+ruta usando UNIDADES
   const byHR={};
   rows.forEach(r=>{
     const k=`${r.hora}|${r.RUTA}`;
-    if(!byHR[k]) byHR[k]={hora:r.hora,RUTA:r.RUTA,tareas:0};
-    byHR[k].tareas+=r.tareas;
+    if(!byHR[k]) byHR[k]={hora:r.hora,RUTA:r.RUTA,uds:0};
+    byHR[k].uds+=r.unidades;
   });
 
   const rutasU=[...new Set(rows.map(r=>r.RUTA))];
@@ -862,13 +862,13 @@ function drawHourlyChart(usuario){
   c.width=W*dpr; c.height=H*dpr;
   c.style.width=W+'px'; c.style.height=H+'px';
   const ctx=c.getContext('2d'); ctx.scale(dpr,dpr);
-  const pad={l:36,r:10,t:22,b:28};
+  const pad={l:44,r:10,t:22,b:28};
   const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
 
-  // max tareas por hora (stacked)
+  // max unidades por hora
   let maxT=0;
   horas.forEach(h=>{
-    const tot=rutasU.reduce((a,r)=>a+(byHR[`${h}|${r}`]?byHR[`${h}|${r}`].tareas:0),0);
+    const tot=rutasU.reduce((a,r)=>a+(byHR[`${h}|${r}`]?byHR[`${h}|${r}`].uds:0),0);
     maxT=Math.max(maxT,tot);
   });
   maxT=maxT*1.15||10;
@@ -888,9 +888,9 @@ function drawHourlyChart(usuario){
   horas.forEach((h,i)=>{
     const bx=pad.l+i*bw+bw/2;
     let base=0;
-    const total=rutasU.reduce((a,r)=>a+(byHR[`${h}|${r}`]?byHR[`${h}|${r}`].tareas:0),0);
+    const total=rutasU.reduce((a,r)=>a+(byHR[`${h}|${r}`]?byHR[`${h}|${r}`].uds:0),0);
     rutasU.forEach(r=>{
-      const t=(byHR[`${h}|${r}`]||{tareas:0}).tareas;
+      const t=(byHR[`${h}|${r}`]||{uds:0}).uds;
       if(!t) return;
       const bh=ch*(t/maxT);
       const by_=pad.t+ch-base-bh;
@@ -901,7 +901,7 @@ function drawHourlyChart(usuario){
     // total encima de la barra
     if(total>0){
       ctx.fillStyle='#e2e8f0'; ctx.font=`bold ${Math.max(8,Math.min(10,barW/3))}px Segoe UI`; ctx.textAlign='center';
-      ctx.fillText(total, bx, pad.t+ch-base-4);
+      ctx.fillText(fmt(total), bx, pad.t+ch-base-4);
     }
     // label hora
     ctx.fillStyle='#475569'; ctx.font='9px Segoe UI'; ctx.textAlign='center';
